@@ -1,0 +1,132 @@
+template:
+  name: Harness Poc
+  type: Pipeline
+  projectIdentifier: cdgchawkdev
+  orgIdentifier: CTSandbox
+  spec:
+    stages:
+      - stage:
+          name: Plan
+          identifier: Plan
+          description: ""
+          type: Deployment
+          spec:
+            deploymentType: NativeHelm
+            service:
+              serviceRef: Plan_Service
+            execution:
+              steps:
+                - step:
+                    name: Helm Deployment
+                    identifier: helmDeployment
+                    type: HelmDeploy
+                    timeout: 10m
+                    spec:
+                      skipDryRun: false
+                - step:
+                    type: K8sApply
+                    name: K8sApply_1
+                    identifier: K8sApply_1
+                    spec:
+                      filePaths:
+                        - templates/test.yml
+                      skipDryRun: false
+                      skipSteadyStateCheck: false
+                      skipRendering: false
+                      overrides: []
+                    timeout: 10m
+              rollbackSteps:
+                - step:
+                    name: Helm Rollback
+                    identifier: helmRollback
+                    type: HelmRollback
+                    timeout: 10m
+                    spec: {}
+            environment:
+              environmentRef: Plan_Env
+              deployToAll: false
+              infrastructureDefinitions:
+                - identifier: Plan_Infra
+          tags: {}
+          failureStrategies:
+            - onFailure:
+                errors:
+                  - AllErrors
+                action:
+                  type: StageRollback
+      - stage:
+          name: Approval
+          identifier: Approval
+          description: ""
+          type: Approval
+          spec:
+            execution:
+              steps:
+                - step:
+                    name: Approval
+                    identifier: Approval
+                    type: HarnessApproval
+                    timeout: 1d
+                    spec:
+                      approvalMessage: |-
+                        Please review the following information
+                        and approve the pipeline progression
+                      includePipelineExecutionHistory: true
+                      approvers:
+                        minimumCount: 1
+                        disallowPipelineExecutor: false
+                        userGroups:
+                          - _project_all_users
+                      approverInputs: []
+          tags: {}
+      - stage:
+          name: Apply
+          identifier: Apply
+          description: ""
+          type: Deployment
+          spec:
+            deploymentType: NativeHelm
+            service:
+              serviceRef: Apply
+            environment:
+              environmentRef: Apply_Env
+              deployToAll: false
+              infrastructureDefinitions:
+                - identifier: Apply_infra
+            execution:
+              steps:
+                - step:
+                    name: Helm Deployment
+                    identifier: helmDeployment
+                    type: HelmDeploy
+                    timeout: 10m
+                    spec:
+                      skipDryRun: false
+                - step:
+                    type: K8sApply
+                    name: K8sApply_1
+                    identifier: K8sApply_1
+                    spec:
+                      filePaths:
+                        - templates/test.yml
+                      skipDryRun: false
+                      skipSteadyStateCheck: false
+                      skipRendering: false
+                      overrides: []
+                    timeout: 10m
+              rollbackSteps:
+                - step:
+                    name: Helm Rollback
+                    identifier: helmRollback
+                    type: HelmRollback
+                    timeout: 10m
+                    spec: {}
+          tags: {}
+          failureStrategies:
+            - onFailure:
+                errors:
+                  - AllErrors
+                action:
+                  type: StageRollback
+  identifier: Harness_Poc
+  versionLabel: "1"
